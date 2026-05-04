@@ -1,0 +1,5 @@
+PySide6>=6.7.0
+PySide6-Addons>=6.7.0
+pyserial>=3.5
+httpx>=0.27.0
+pyinstaller>=6.0.0
