@@ -22,6 +22,15 @@ The system has two parts:
 
 ---
 
+## Screenshots
+
+| No one detected | Calibrating (adjusting) | Fully detected |
+|:---:|:---:|:---:|
+| ![No one detected](docs/figures/no_signal.png) | ![Calibrating](docs/figures/detecting.png) | ![Working](docs/figures/working.png) |
+| Signal below threshold — Monika waits | Signal 80k–200k — yellow bar fills as you move closer | Signal above 200k — live BPM and breathing rate |
+
+---
+
 ## Requirements
 
 **Tested on Windows 11 and macOS**

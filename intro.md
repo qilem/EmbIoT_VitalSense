@@ -12,4 +12,4 @@ No wearable subscription. No chest strap. Just sit down, face the board, and let
 
 **Key results**: live BPM within ±5 BPM at rest, breathing rate within ±2 breaths/min, ~1 s end-to-end latency, detection range 30–60 cm.
 
-![Vital Sense companion UI running on Windows 11](docs/figures/companion-ui.png)
+![Vital Sense companion UI — live heart rate detection](docs/figures/working.png)
