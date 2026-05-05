@@ -639,32 +639,3 @@ class CompanionWindow(QWidget):
         self._refit()
         mood = self._mood_list[self._mood_idx]
         self._load_frames(mood.frames, mood.frame_ms)
-            was_dragging = self._dragging
-            self._drag_origin = None
-            self._drag_moved  = False
-            self._dragging    = False
-            if was_dragging:
-                self._enter_state(self._current_state)
-        elif event.button() == Qt.MouseButton.RightButton:
-            self._show_context_menu(event.globalPosition().toPoint())
-
-    def _show_context_menu(self, pos: QPoint):
-        menu = QMenu(self)
-        if self._settings_fn:
-            menu.addAction("Settings…").triggered.connect(self._settings_fn)
-        menu.addSeparator()
-        menu.addAction("Quit").triggered.connect(QApplication.quit)
-        menu.exec(pos)
-
-    # ── scroll to resize ──────────────────────────────────────────────────────
-
-    def wheelEvent(self, event):
-        step = _SPRITE_SIZE_STEP if event.angleDelta().y() > 0 else -_SPRITE_SIZE_STEP
-        new_sz = max(_SPRITE_SIZE_MIN, min(_SPRITE_SIZE_MAX, self._sprite_size + step))
-        if new_sz == self._sprite_size:
-            return
-        self._sprite_size = new_sz
-        self._sprite_label.setFixedSize(new_sz, new_sz)
-        self._refit()
-        mood = self._mood_list[self._mood_idx]
-        self._load_frames(mood.frames, mood.frame_ms)
