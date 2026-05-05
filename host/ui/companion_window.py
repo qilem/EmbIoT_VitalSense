@@ -378,10 +378,12 @@ class CompanionWindow(QWidget):
         s = self._sprite_size
         if hasattr(self, '_sprite_label'):
             self._sprite_label.setFixedSize(s, s)
-        if self.layout():
-            self.layout().activate()
-            h = self.layout().sizeHint().height()
-            self.resize(max(s + 60, 280), h)
+        bubble_h = 0
+        if hasattr(self, '_bubble') and self._bubble.isVisible():
+            bubble_h = self._bubble.height()  # accurate after adjustSize() in show_text
+        # 70 = signal_bar(10) + data_panel(25) + margins(12) + spacing(9) + slack(14)
+        h = s + max(bubble_h + 70, 130)
+        self.resize(max(s + 60, 280), h)
 
     # definitive white-border fix: clear all pixels to transparent
     def paintEvent(self, event: QPaintEvent):
