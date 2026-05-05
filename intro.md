@@ -1,5 +1,5 @@
 # Vital Sense: Contactless Radar Health Companion
-*No sweaty chest straps. No intrusive cameras. No wearable subscriptions.*
+
 
 **The Problem:** Continuous health monitoring usually means strapping an uncomfortable device to your body or compromising your privacy with camera-based tracking. 
 
@@ -9,7 +9,8 @@ Raw radar frames stream over USB-CDC to our PC-side DSP pipeline, where range FF
 
 **The Wow Factor:** We paired this military-grade sensing with a Monika-style desktop companion. Sitting quietly on your screen, she monitors your real-time vitals and speaks up (powered by Anthropic/OpenAI) when she senses stress, offering context-aware, "tsundere-style" care during long focus sessions.
 
-**Key Results:** * **Accuracy:** Live BPM within ±5 BPM at rest, breathing rate within ±2 breaths/min.
+**Key Results:** 
+* **Accuracy:** Live BPM within ±5 BPM at rest, breathing rate within ±2 breaths/min.
 * **Performance:** ~1 s end-to-end latency, 30–90 cm detection range.
 
 
