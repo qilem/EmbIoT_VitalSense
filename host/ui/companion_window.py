@@ -11,16 +11,27 @@ Companion mode — Monika Shimeji desktop companion.
 from __future__ import annotations
 import ctypes
 import sys
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from PySide6.QtCore import Qt, QTimer, Signal, QPoint
+from PySide6.QtCore import Qt, QTimer, Signal, QPoint, QRect
 from PySide6.QtGui import (QPixmap, QFont, QColor, QPainter,
                             QLinearGradient, QPaintEvent)
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QApplication, QMenu
 
 from app_state import VitalsSample
+from ui.breathing_overlay import BreathingOverlay
+
+# ──────────────────────────────────────────────────────────────────────────────
+# UI Glitch Helpers (Zalgo)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def zalgo_text(text: str) -> str:
+    """Add minimal corruption to text for the DDLC glitch effect."""
+    chars = "̷̵̴̰̹̺̻̻"
+    return "".join(c + random.choice(chars) if c != " " and random.random() > 0.4 else c for c in text)
 
 ASSETS = Path(__file__).parent.parent / "assets"
 
@@ -232,6 +243,10 @@ class DataPanel(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setWordWrap(True)
         self.setText("Sit in front of the sensor")
+        self._glitch_active = False
+
+    def set_glitch(self, active: bool):
+        self._glitch_active = active
 
     def refresh(self, sample: VitalsSample):
         state = sample.state
@@ -242,13 +257,18 @@ class DataPanel(QLabel):
             self.setStyleSheet(_PANEL_WARN)
             self.setText("Detecting...")
         else:
-            bpm = f"{sample.bpm:.0f}" if sample.bpm > 0 else "--"
-            rr  = f"{sample.rr:.0f}"  if sample.rr  > 0 else "--"
+            bpm_val = f"{sample.bpm:.0f}" if sample.bpm > 0 else "--"
+            rr_val  = f"{sample.rr:.0f}"  if sample.rr  > 0 else "--"
+            
+            text = f"♥ {bpm_val} BPM   {rr_val}/min"
+            if self._glitch_active:
+                text = zalgo_text(text)
+
             if state == "stress":
                 self.setStyleSheet(_PANEL_WARN)
             elif state != "critical":
                 self.setStyleSheet(_PANEL_NORMAL)
-            self.setText(f"♥ {bpm} BPM   {rr}/min")
+            self.setText(text)
 
     def set_flash(self, on: bool):
         self.setStyleSheet(_PANEL_ALERT if on else _PANEL_NORMAL)
@@ -274,6 +294,8 @@ class CompanionWindow(QWidget):
         self._frames:     list[QPixmap] = []
         self._frame_idx:  int        = 0
         self._sprite_size: int       = _SPRITE_SIZE_DEFAULT
+        self._base_sprite_size: int  = _SPRITE_SIZE_DEFAULT
+        self._base_pos:    QPoint | None = None
 
         self._drag_origin: QPoint | None = None
         self._drag_moved   = False
@@ -301,6 +323,17 @@ class CompanionWindow(QWidget):
         self._flash_timer.setInterval(500)
         self._flash_timer.timeout.connect(self._flash_tick)
         self._flash_state = False
+
+        self._shake_timer = QTimer(self)
+        self._shake_timer.setInterval(40)
+        self._shake_timer.timeout.connect(self._shake_tick)
+
+        self._glitch_timer = QTimer(self)
+        self._glitch_timer.setSingleShot(True)
+        self._glitch_timer.timeout.connect(self._stop_glitch)
+
+        self._breathing_overlay: BreathingOverlay | None = None
+        self._breathing_active = False
 
         self._enter_state("calibrating")
 
@@ -335,6 +368,7 @@ class CompanionWindow(QWidget):
     def _refit(self):
         s = self._sprite_size
         self.resize(max(s + 60, 280), s + 120)
+        self._sprite_label.setFixedSize(s, s)
 
     # definitive white-border fix: clear all pixels to transparent
     def paintEvent(self, event: QPaintEvent):
@@ -372,13 +406,47 @@ class CompanionWindow(QWidget):
 
     def _enter_state(self, state: str):
         self._bubble.hide()  # clear any lingering bubble from the previous state
+        
+        # Transitions
+        old_state = self._current_state
         self._current_state = state
+
+        if state == "critical":
+            if old_state != "critical":
+                # Save state for restoration
+                self._base_pos = self.pos()
+                self._base_sprite_size = self._sprite_size
+                # Double size
+                self._sprite_size = min(_SPRITE_SIZE_MAX, self._sprite_size * 2)
+                self._refit()
+                # Center
+                sc = QApplication.primaryScreen().availableGeometry()
+                self.move(sc.center().x() - self.width() // 2,
+                          sc.center().y() - self.height() // 2)
+                self._shake_timer.start()
+        elif old_state == "critical":
+            # Restore from critical
+            self._shake_timer.stop()
+            self._sprite_size = self._base_sprite_size
+            self._refit()
+            if self._base_pos:
+                self.move(self._base_pos)
+
+        if state == "stress":
+            self._data_panel.set_glitch(True)
+            self._glitch_timer.start(2500)
+            self._start_breathing()
+        else:
+            self._stop_breathing()
+
         self._mood_list = _MOODS.get(state, _MOODS["normal"])
         self._mood_idx  = 0
         self._start_mood(self._mood_list[0])
+        
         if state in _STATE_SOUNDS:
             snd, vol = _STATE_SOUNDS[state]
             _play(snd, vol, self._sound_enabled)
+        
         # start/stop critical flash
         if state == "critical":
             self._flash_state = False
@@ -452,6 +520,13 @@ class CompanionWindow(QWidget):
             self._signal_bar.show()
         else:
             self._signal_bar.hide()
+        
+        # Biofeedback check: if breathing is healthy during stress, we can transition back
+        if self._breathing_active and sample.rr > 0 and sample.rr < 16:
+            # Successfully relaxed
+            self._stop_breathing()
+            self._bubble.show_text("That's the spirit! Just relax a little.", "normal", 
+                                   sound_enabled=self._sound_enabled)
 
     def _show_dialogue(self, state: str, bpm: float, rr: float):
         se = self._sound_enabled
@@ -464,12 +539,45 @@ class CompanionWindow(QWidget):
             line = self._dialogue_fn(state, bpm, rr, callback=_on_llm_ready)
         except TypeError:
             line = self._dialogue_fn(state, bpm, rr)
+        
+        # Custom dialogue overrides for new features
+        if state == "stress":
+            line = "Your breathing is all over the place. Look into my eyes and take a deep breath, following this rhythm."
+        elif state == "critical":
+            line = f"Stop what you're doing. Your heart rate is {bpm:.0f}; you need to get out of your seat and walk around."
+
         self._bubble.show_text(line, state, sound_enabled=se)
 
     def _idle_bubble(self):
         if self._current_state == "normal" and not self._dragging:
             _play(*_IDLE_SOUND, enabled=self._sound_enabled)
             self._show_dialogue("normal", 0, 0)
+
+    # ── special effects ───────────────────────────────────────────────────────
+
+    def _shake_tick(self):
+        if self._current_state != "critical" or self._dragging:
+            return
+        dx = random.randint(-4, 4)
+        dy = random.randint(-4, 4)
+        center = QApplication.primaryScreen().availableGeometry().center()
+        self.move(center.x() - self.width() // 2 + dx,
+                  center.y() - self.height() // 2 + dy)
+
+    def _stop_glitch(self):
+        self._data_panel.set_glitch(False)
+
+    def _start_breathing(self):
+        if not self._breathing_overlay:
+            self._breathing_overlay = BreathingOverlay()
+        self._breathing_overlay.show()
+        self._breathing_overlay.start()
+        self._breathing_active = True
+
+    def _stop_breathing(self):
+        if self._breathing_overlay:
+            self._breathing_overlay.hide()
+        self._breathing_active = False
 
     # ── critical flash ────────────────────────────────────────────────────────
 
@@ -481,6 +589,10 @@ class CompanionWindow(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            if self._current_state == "critical":
+                # Clicking dismisses critical interruption
+                self._enter_state("normal")
+                return
             self._drag_origin = event.globalPosition().toPoint()
             self._drag_moved  = False
 
@@ -498,6 +610,35 @@ class CompanionWindow(QWidget):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            was_dragging = self._dragging
+            self._drag_origin = None
+            self._drag_moved  = False
+            self._dragging    = False
+            if was_dragging:
+                self._enter_state(self._current_state)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self._show_context_menu(event.globalPosition().toPoint())
+
+    def _show_context_menu(self, pos: QPoint):
+        menu = QMenu(self)
+        if self._settings_fn:
+            menu.addAction("Settings…").triggered.connect(self._settings_fn)
+        menu.addSeparator()
+        menu.addAction("Quit").triggered.connect(QApplication.quit)
+        menu.exec(pos)
+
+    # ── scroll to resize ──────────────────────────────────────────────────────
+
+    def wheelEvent(self, event):
+        step = _SPRITE_SIZE_STEP if event.angleDelta().y() > 0 else -_SPRITE_SIZE_STEP
+        new_sz = max(_SPRITE_SIZE_MIN, min(_SPRITE_SIZE_MAX, self._sprite_size + step))
+        if new_sz == self._sprite_size:
+            return
+        self._sprite_size = new_sz
+        self._sprite_label.setFixedSize(new_sz, new_sz)
+        self._refit()
+        mood = self._mood_list[self._mood_idx]
+        self._load_frames(mood.frames, mood.frame_ms)
             was_dragging = self._dragging
             self._drag_origin = None
             self._drag_moved  = False
