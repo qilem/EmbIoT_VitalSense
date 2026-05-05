@@ -126,11 +126,23 @@ Click **Next**, choose **Getting Started → Empty App**, set a name and path, c
 
 ### Step 4 — Clone and copy this repo
 
-```bash
+Clone the repo, copy its **contents** into your project folder, then delete the cloned folder. Replace `<your-project-folder>` with the actual folder name you chose in Step 3.
+
+**Windows (PowerShell)**
+```powershell
 git clone https://github.com/qilem/EmbIoT_VitalSense.git
+xcopy /E /Y /I EmbIoT_VitalSense\* <your-project-folder>\
+rmdir /S /Q EmbIoT_VitalSense
 ```
 
-Copy the **contents** of the cloned repo (not the `EmbIoT_VitalSense` folder itself) into your project folder from Step 3 (overwrite existing files). Your project folder should contain `main.c`, `host/`, etc. directly — not a nested `EmbIoT_VitalSense/` subfolder.
+**macOS / Linux**
+```bash
+git clone https://github.com/qilem/EmbIoT_VitalSense.git
+cp -r EmbIoT_VitalSense/. <your-project-folder>/
+rm -rf EmbIoT_VitalSense
+```
+
+After this, your project folder should contain `main.c`, `host/`, etc. at the top level — **not** a nested `EmbIoT_VitalSense/` subfolder.
 
 ### Step 5 — Open in VSCode
 
