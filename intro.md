@@ -7,7 +7,7 @@
 
 Raw radar frames stream over USB-CDC to our PC-side DSP pipeline, where range FFTs, phase unwrapping, and dual Butterworth filters isolate your breathing (~0.1–0.5 Hz) and heart rate (~0.8–2.5 Hz). 
 
-**The Wow Factor:** We paired this military-grade sensing with a Monika-style desktop companion. Sitting quietly on your screen, she monitors your real-time vitals and speaks up (powered by Anthropic/OpenAI) when she senses stress, offering context-aware, "tsundere-style" care during long focus sessions.
+**The Wow Factor:** We paired this military-grade sensing with a Monika-style desktop companion. Sitting quietly on your screen, she monitors your real-time vitals and warned you when she senses stress, offering context-aware, "tsundere-style" care during long focus sessions.
 
 **Key Results:** 
 * **Accuracy:** Live BPM within ±5 BPM at rest, breathing rate within ±2 breaths/min.
