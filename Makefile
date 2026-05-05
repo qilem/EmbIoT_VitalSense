@@ -101,9 +101,7 @@ SOURCES=
 INCLUDES=
 
 # Add additional defines to the build process (without a leading -D).
-# RAW_CAPTURE_DEBUG: sends raw MAGIC-framed uint16 stream for PC-side DSP (--dsp pc mode).
-# Remove this line to use edge-AI JSON mode (--dsp edge).
-DEFINES=RAW_CAPTURE_DEBUG
+DEFINES=
 
 # Select softfp or hardfp floating point. Default is softfp.
 VFP_SELECT=
