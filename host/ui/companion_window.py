@@ -376,13 +376,12 @@ class CompanionWindow(QWidget):
 
     def _refit(self):
         s = self._sprite_size
-        bubble_h = 0
-        if hasattr(self, '_bubble') and self._bubble.isVisible():
-            bubble_h = self._bubble.sizeHint().height()
-        h = s + max(bubble_h + 50, 120)  # 50 = data panel + spacing + margins
-        self.resize(max(s + 60, 280), h)
         if hasattr(self, '_sprite_label'):
             self._sprite_label.setFixedSize(s, s)
+        if self.layout():
+            self.layout().activate()
+            h = self.layout().sizeHint().height()
+            self.resize(max(s + 60, 280), h)
 
     # definitive white-border fix: clear all pixels to transparent
     def paintEvent(self, event: QPaintEvent):
