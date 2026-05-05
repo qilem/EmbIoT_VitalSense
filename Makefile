@@ -142,6 +142,7 @@ PREBUILD=
 POSTBUILD=
 
 CY_IGNORE=
+CY_IGNORE+=./host
 CY_IGNORE+=./.venv
 CY_IGNORE+=../mtb_shared/cobs-c/f4b8129/tests-c
 CY_IGNORE+=../mtb_shared/cobs-c/f4b8129/cobsr.c
