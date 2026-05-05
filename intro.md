@@ -1,5 +1,5 @@
 # Vital Sense: Contactless Radar Health Companion
-*No sweaty chest straps. No intrusive cameras. No wearable subscriptions.*
+
 
 **The Problem:** Relentless overtime and late-night coding sessions create a silent risk of severe exhaustion or even sudden health crises (like cardiac events) right at the desk. Yet, continuous health monitoring usually means strapping an uncomfortable device to your body or compromising your privacy with invasive camera-based tracking.
 
