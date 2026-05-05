@@ -39,7 +39,7 @@ _DEMO_STATES = itertools.cycle([
     dict(bpm=72,  rr=15, state="normal",      signal=0.92, present=True),
     dict(bpm=72,  rr=15, state="normal",      signal=0.95, present=True),
     dict(bpm=98,  rr=22, state="stress",      signal=0.91, present=True),
-    dict(bpm=0,   rr=0,  state="critical",    signal=0.04, present=False),
+    dict(bpm=118, rr=26, state="critical",    signal=0.95, present=True),
 ])
 _DEMO_INTERVAL_MS = 3000
 
