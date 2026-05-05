@@ -337,7 +337,7 @@ bool vitals_dsp_push(const uint16_t *samples, VitalsResult *out)
     if (bpm < 30.f || bpm > 200.f) bpm = 0.f;
 
     /* Presence: absolute peak magnitude per chirp > empirically validated 200k threshold */
-#define PRESENCE_MAG_PER_CHIRP 150000.f
+#define PRESENCE_MAG_PER_CHIRP 180000.f
     out->bpm        = bpm;
     out->rr         = rr;
     out->signal     = signal_norm;
