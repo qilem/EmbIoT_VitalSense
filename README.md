@@ -126,10 +126,25 @@ Click **Next**, choose **Getting Started → Empty App**, set a name and path, c
 
 ### Step 4 — Clone and copy this repo
 
-Clone the repo, copy its **contents** into your project folder, then delete the cloned folder. Replace `<your-project-folder>` with the actual folder name you chose in Step 3.
+1. Clone this repository to a temporary location:
+   ```bash
+   git clone https://github.com/qilem/EmbIoT_VitalSense.git
+   ```
+2. Copy the **contents** of the cloned repo into your ModusToolbox project folder (the one you named in Step 3). **Overwrite all existing files** (especially `main.c` and `Makefile`).
 
+**Windows (PowerShell)**
+```powershell
+xcopy /E /Y /I EmbIoT_VitalSense\* <your-project-folder>\
+rmdir /S /Q EmbIoT_VitalSense
+```
 
-After this, your project folder should contain `main.c`, `host/`, etc. at the top level — **not** a nested `EmbIoT_VitalSense/` subfolder.
+**macOS / Linux**
+```bash
+cp -r EmbIoT_VitalSense/. <your-project-folder>/
+rm -rf EmbIoT_VitalSense
+```
+
+**Verify**: Your project folder should now have `main.c`, `host/`, and `deps/` directly inside it. If you see a folder named `EmbIoT_VitalSense` inside your project, you copied it incorrectly—move its contents up one level.
 
 ### Step 5 — Open in VSCode
 
