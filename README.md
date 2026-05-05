@@ -263,17 +263,6 @@ python main.py --dsp demo
 
 ## Troubleshooting
 
-**Wrong COM port / no data**
-Unplug and replug the USER USB cable and check which new port appears in Device Manager — that is the data port. The KitProg3 port carries debug UART, not radar data.
-
-**App window has white border**
-The Windows 11 DWM rounded-corner fix is applied automatically at startup. Toggle the window from the tray icon if it reappears.
-
-**Monika sprite is blank**
-The sprite PNGs must be present in `host/assets/`. Copy the Shimeji image set (`idle1–9.png`, `food1–4.png`, `sit1–4.png`, etc.) into that folder.
-
-**LLM dialogue not updating**
-Open Settings (tray → Settings…) and paste an Anthropic or OpenAI API key. The app falls back to canned offline dialogue without a key.
 
 **Calibrating state never ends**
 - Confirm you are seated ~50 cm from the board with your chest facing it.
