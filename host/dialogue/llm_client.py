@@ -139,7 +139,7 @@ class LLMClient:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "gpt-4o-mini",
+                "model": "gpt-4.1-nano",
                 "max_tokens": 128,
                 "messages": [
                     {"role": "system", "content": system_prompt},

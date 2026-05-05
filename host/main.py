@@ -68,12 +68,28 @@ def _build_dialogue_fn(settings: Settings):
 
 
 def _start_reader(dsp_mode: str, port: str, app_state: AppState):
+    def _on_port_error(msg: str):
+        from PySide6.QtCore import QTimer as _QTimer
+        from PySide6.QtWidgets import QMessageBox as _QMB
+        def _show():
+            box = _QMB()
+            box.setWindowTitle("Vita — Serial Port Error")
+            box.setIcon(_QMB.Icon.Critical)
+            box.setText(
+                f"Could not open serial port <b>{port}</b>.<br><br>"
+                f"{msg}<br><br>"
+                "Open <b>Settings</b> from the tray icon to change the port,<br>"
+                "or relaunch with <code>--serial &lt;PORT&gt;</code>."
+            )
+            box.exec()
+        _QTimer.singleShot(0, _show)
+
     if dsp_mode == "pc":
         from pc_dsp_reader import PcDspReader
-        r = PcDspReader(port, app_state)
+        r = PcDspReader(port, app_state, on_error=_on_port_error)
     else:
         from serial_reader import SerialReader
-        r = SerialReader(port, app_state)
+        r = SerialReader(port, app_state, on_error=_on_port_error)
     r.start()
     return r
 

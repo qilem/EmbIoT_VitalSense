@@ -371,6 +371,7 @@ class CompanionWindow(QWidget):
     # ── state & mood machine ──────────────────────────────────────────────────
 
     def _enter_state(self, state: str):
+        self._bubble.hide()  # clear any lingering bubble from the previous state
         self._current_state = state
         self._mood_list = _MOODS.get(state, _MOODS["normal"])
         self._mood_idx  = 0

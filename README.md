@@ -130,11 +130,11 @@ Click **Next**, choose **Getting Started → Empty App**, set a name and path, c
 git clone https://github.com/qilem/EmbIoT_VitalSense.git
 ```
 
-Copy **everything** from the cloned repo into the empty-app folder from Step 3 (overwrite existing files).
+Copy **everything** from the cloned repo into your project folder from Step 3 (overwrite existing files).
 
 ### Step 5 — Open in VSCode
 
-`File → Open File` → navigate to the empty-app folder → select `mtb-example-empty-app.code-workspace` → click **Open Workspace**.
+`File → Open File` → navigate to your project folder → select the `.code-workspace` file (named after your project, e.g. `Empty_App.code-workspace`) → click **Open Workspace**.
 
 ![Step 5](images/step_open_ws.png)
 

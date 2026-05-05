@@ -24,10 +24,12 @@ MAGIC = 0xFFDDFFDD
 SAMPLE_PER_CHIRP = 128
 CHIRP_PER_FRAME  = 256
 
-# Presence floor: mean |spec| peak > this → person detected.
-# 200k was observed as a clear-presence marker; use half that as the detection floor
-# so the sensor catches the person reliably before the strong-lock threshold.
-_PRESENCE_FLOOR = 100_000.0
+# Two-level presence thresholds:
+#   energy < _CALIBRATING_FLOOR → no one detected
+#   _CALIBRATING_FLOOR ≤ energy < _PRESENCE_FLOOR → calibrating (person sensed, signal weak)
+#   energy ≥ _PRESENCE_FLOOR → full presence, run BPM/RR
+_CALIBRATING_FLOOR = 80_000.0
+_PRESENCE_FLOOR    = 200_000.0
 
 
 def _peak_energy(mag: np.ndarray) -> float:
@@ -43,9 +45,11 @@ def _zero_crossing_bpm(sig: np.ndarray, fs: float) -> float:
 
 
 class PcDspReader:
-    def __init__(self, port: str, app_state: AppState):
+    def __init__(self, port: str, app_state: AppState, on_error=None):
         self._port = port
         self._state = app_state
+        self._on_error = on_error       # called once on first serial open failure
+        self._error_shown = False
         self._stop = threading.Event()
         self._pipe = Pipeline(
             SAMPLE_PER_CHIRP,
@@ -53,11 +57,8 @@ class PcDspReader:
             window_size=CHIRP_PER_FRAME * 8,
             stride=64,
         )
-        self._peak_energy_seen = 1.0
-        self._frames_ready = 0          # count of processed frames (calibrating gate)
-        self._bpm_baseline = 0.0        # 5-min EMA baseline for stress detection
-        self._elevated_since: float | None = None  # monotonic time when BPM went high
-        self._no_signal_since: float | None = None
+        self._bpm_baseline = 0.0
+        self._elevated_since: float | None = None
 
     def start(self):
         threading.Thread(target=self._run, daemon=True).start()
@@ -69,9 +70,13 @@ class PcDspReader:
         while not self._stop.is_set():
             try:
                 with serial.Serial(self._port, timeout=2.0) as s:
+                    self._error_shown = False
                     self._read_loop(s)
             except serial.SerialException as e:
                 print(f"[pc_dsp] {e} — retrying in 3 s")
+                if not self._error_shown and self._on_error:
+                    self._error_shown = True
+                    self._on_error(str(e))
                 time.sleep(3)
 
     def _read_loop(self, s: serial.Serial):
@@ -97,55 +102,69 @@ class PcDspReader:
         breath, heart = self._pipe.vitals()
 
         energy = _peak_energy(mag)
-        if energy > self._peak_energy_seen:
-            self._peak_energy_seen = energy
-        signal_norm = min(1.0, energy / self._peak_energy_seen) if self._peak_energy_seen > 0 else 0.0
-        present = energy > _PRESENCE_FLOOR
+        # signal_norm: 0 at calibrating floor (80k), 1.0 at presence floor (200k).
+        # Bar shows nothing below 80k, then fills red→yellow→green through the
+        # calibrating zone — colour thresholds 0.4 and 0.85 in _SignalBar.
+        _range = _PRESENCE_FLOOR - _CALIBRATING_FLOOR
+        signal_norm = max(0.0, min(1.0, (energy - _CALIBRATING_FLOOR) / _range))
 
+        now = time.monotonic()
+
+        if energy < _CALIBRATING_FLOOR:
+            # No one in range
+            self._elevated_since = None
+            self._bpm_baseline = 0.0
+            self._state.update(
+                bpm=0, rr=0, state="no_signal",
+                signal=signal_norm, target_bin=0,
+                present=False, timestamp_s=int(time.time()),
+            )
+            return
+
+        if energy < _PRESENCE_FLOOR:
+            # Person sensed but signal too weak for reliable BPM — calibrating
+            self._state.update(
+                bpm=0, rr=0, state="calibrating",
+                signal=signal_norm, target_bin=0,
+                present=False, timestamp_s=int(time.time()),
+            )
+            return
+
+        # Full presence — run BPM/RR and stress/critical logic
         fs = self._pipe._fs
-        bpm = _zero_crossing_bpm(heart,  fs) if present else 0.0
-        rr  = _zero_crossing_bpm(breath, fs) if present else 0.0
-
-        # Clamp to physiological ranges
+        bpm = _zero_crossing_bpm(heart,  fs)
+        rr  = _zero_crossing_bpm(breath, fs)
         bpm = bpm if 30 <= bpm <= 200 else 0.0
         rr  = rr  if  4 <= rr  <=  40 else 0.0
 
-        self._frames_ready += 1
-        now = time.monotonic()
+        if bpm == 0:
+            # Signal strong but BPM extraction failed this frame
+            self._state.update(
+                bpm=0, rr=rr, state="calibrating",
+                signal=signal_norm, target_bin=0,
+                present=True, timestamp_s=int(time.time()),
+            )
+            return
 
-        # Derive state — 3 modes:
-        #   calibrating : pipeline warming up (first 5 frames)
-        #   no_signal   : no person, OR person present but both bpm+rr dropped to 0 (lost signal)
-        #   normal/stress/critical : full detection
-        if self._frames_ready < 5:
-            state = "calibrating"
-        elif not present or bpm == 0:
-            # No one detected — always calm no_signal, never alert
-            self._elevated_since = None
-            self._no_signal_since = None
-            state = "no_signal"
+        if self._bpm_baseline == 0.0:
+            self._bpm_baseline = bpm
         else:
-            # Person present with valid BPM — run stress/critical logic
-            self._no_signal_since = None
-            if self._bpm_baseline == 0.0:
-                self._bpm_baseline = bpm
-            else:
-                self._bpm_baseline += 0.001 * (bpm - self._bpm_baseline)
+            self._bpm_baseline += 0.001 * (bpm - self._bpm_baseline)
 
-            elevated = (bpm - self._bpm_baseline) > 20
-            if elevated:
-                if self._elevated_since is None:
-                    self._elevated_since = now
-                elapsed = now - self._elevated_since
-                state = "critical" if elapsed > 120 else "stress" if elapsed > 30 else "normal"
-            else:
-                self._elevated_since = None
-                state = "normal"
+        elevated = (bpm - self._bpm_baseline) > 20
+        if elevated:
+            if self._elevated_since is None:
+                self._elevated_since = now
+            elapsed = now - self._elevated_since
+            state = "critical" if elapsed > 120 else "stress" if elapsed > 30 else "normal"
+        else:
+            self._elevated_since = None
+            state = "normal"
 
         self._state.update(
             bpm=bpm, rr=rr, state=state,
-            signal=signal_norm, target_bin=0,
-            present=present, timestamp_s=int(time.time()),
+            signal=1.0, target_bin=0,
+            present=True, timestamp_s=int(time.time()),
         )
 
     def _sync(self, s: serial.Serial):

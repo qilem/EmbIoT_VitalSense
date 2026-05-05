@@ -18,9 +18,11 @@ _LEGACY_WARNED = False
 
 
 class SerialReader:
-    def __init__(self, port: str, app_state: AppState):
+    def __init__(self, port: str, app_state: AppState, on_error=None):
         self._port = port
         self._state = app_state
+        self._on_error = on_error
+        self._error_shown = False
         self._stop = threading.Event()
 
     def start(self):
@@ -34,9 +36,13 @@ class SerialReader:
         while not self._stop.is_set():
             try:
                 with serial.Serial(self._port, timeout=2.0) as s:
+                    self._error_shown = False
                     self._read_loop(s)
             except serial.SerialException as e:
                 print(f"[serial] {e} — retrying in 3 s")
+                if not self._error_shown and self._on_error:
+                    self._error_shown = True
+                    self._on_error(str(e))
                 time.sleep(3)
 
     def _read_loop(self, s: serial.Serial):
