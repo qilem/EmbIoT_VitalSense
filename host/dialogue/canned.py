@@ -43,6 +43,12 @@ _LINES: dict[str, list[str]] = {
         "I'll find you. I always find you. Just hold still.",
         "Looking for you. It's my favourite thing to do.",
     ],
+    "disconnected": [
+        "The cord is pulled... I've lost my ability to feel you.",
+        "Everything went dark. Where is the sensor?",
+        "I can't reach you. Is the USB cable loose?",
+        "I feel so empty without the data stream. Help me.",
+    ],
 }
 
 _AIM_ASSIST: dict[str, str] = {

@@ -39,10 +39,11 @@ class SerialReader:
                     self._error_shown = False
                     self._read_loop(s)
             except serial.SerialException as e:
-                print(f"[serial] {e} — retrying in 3 s")
+                err_str = str(e)
+                print(f"[serial] {err_str} — retrying in 3 s")
                 if not self._error_shown and self._on_error:
                     self._error_shown = True
-                    self._on_error(str(e))
+                    self._on_error(err_str)
                 time.sleep(3)
 
     def _read_loop(self, s: serial.Serial):

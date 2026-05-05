@@ -70,19 +70,34 @@ def _build_dialogue_fn(settings: Settings):
 def _start_reader(dsp_mode: str, port: str, app_state: AppState):
     def _on_port_error(msg: str):
         from PySide6.QtCore import QTimer as _QTimer
-        from PySide6.QtWidgets import QMessageBox as _QMB
+        from PySide6.QtWidgets import QApplication as _QApp, QMessageBox as _QMB
+        
+        # Update state so Monika says something
+        app_state.update(
+            bpm=0, rr=0, state="disconnected", signal=0,
+            target_bin=0, present=False, timestamp_s=int(time.time())
+        )
+
         def _show():
             box = _QMB()
             box.setWindowTitle("Vita — Serial Port Error")
             box.setIcon(_QMB.Icon.Critical)
             box.setText(
                 f"Could not open serial port <b>{port}</b>.<br><br>"
-                f"{msg}<br><br>"
-                "Open <b>Settings</b> from the tray icon to change the port,<br>"
-                "or relaunch with <code>--serial &lt;PORT&gt;</code>."
+                f"<i>{msg}</i><br><br>"
+                "1. Confirm both USB-C cables are connected.<br>"
+                "2. Check <b>Settings</b> in the tray icon to verify the port name.<br>"
+                "3. Close any other apps using this port.<br><br>"
+                "The app will continue retrying in the background."
             )
+            box.setStandardButtons(_QMB.StandardButton.Ok)
             box.exec()
-        _QTimer.singleShot(0, _show)
+        
+        instance = _QApp.instance()
+        if instance:
+            _QTimer.singleShot(0, instance, _show)
+        else:
+            print(f"Error: {msg}")
 
     if dsp_mode == "pc":
         from pc_dsp_reader import PcDspReader
