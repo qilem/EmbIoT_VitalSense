@@ -1,6 +1,5 @@
 # Vital Sense — Your Heart's Companion
 
-> *See your vitals. No wearable. No contact. Just you and a radar.*
 
 Vital Sense turns an Infineon CY8CKIT-062S2-AI evaluation board into a passive, contactless heart-rate and breathing monitor. The on-board BGT60TR13C 60 GHz FMCW radar detects the tiny chest-wall displacements your heartbeat and breath create — at up to 50 cm away, through your shirt, without touching anything.
 
