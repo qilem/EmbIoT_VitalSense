@@ -22,7 +22,6 @@ from PySide6.QtGui import (QPixmap, QFont, QColor, QPainter,
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QApplication, QMenu
 
 from app_state import VitalsSample
-from ui.breathing_overlay import BreathingOverlay
 
 # ──────────────────────────────────────────────────────────────────────────────
 # UI Glitch Helpers (Zalgo)
@@ -332,9 +331,6 @@ class CompanionWindow(QWidget):
         self._glitch_timer.setSingleShot(True)
         self._glitch_timer.timeout.connect(self._stop_glitch)
 
-        self._breathing_overlay: BreathingOverlay | None = None
-        self._breathing_active = False
-
         self._enter_state("calibrating")
 
     @property
@@ -520,13 +516,6 @@ class CompanionWindow(QWidget):
             self._signal_bar.show()
         else:
             self._signal_bar.hide()
-        
-        # Biofeedback check: if breathing is healthy during stress, we can transition back
-        if self._breathing_active and sample.rr > 0 and sample.rr < 16:
-            # Successfully relaxed
-            self._stop_breathing()
-            self._bubble.show_text("That's the spirit! Just relax a little.", "normal", 
-                                   sound_enabled=self._sound_enabled)
 
     def _show_dialogue(self, state: str, bpm: float, rr: float):
         se = self._sound_enabled
@@ -541,9 +530,7 @@ class CompanionWindow(QWidget):
             line = self._dialogue_fn(state, bpm, rr)
         
         # Custom dialogue overrides for new features
-        if state == "stress":
-            line = "Your breathing is all over the place. Look into my eyes and take a deep breath, following this rhythm."
-        elif state == "critical":
+        if state == "critical":
             line = f"Stop what you're doing. Your heart rate is {bpm:.0f}; you need to get out of your seat and walk around."
 
         self._bubble.show_text(line, state, sound_enabled=se)
@@ -566,18 +553,6 @@ class CompanionWindow(QWidget):
 
     def _stop_glitch(self):
         self._data_panel.set_glitch(False)
-
-    def _start_breathing(self):
-        if not self._breathing_overlay:
-            self._breathing_overlay = BreathingOverlay()
-        self._breathing_overlay.show()
-        self._breathing_overlay.start()
-        self._breathing_active = True
-
-    def _stop_breathing(self):
-        if self._breathing_overlay:
-            self._breathing_overlay.hide()
-        self._breathing_active = False
 
     # ── critical flash ────────────────────────────────────────────────────────
 
