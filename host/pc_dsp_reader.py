@@ -28,8 +28,8 @@ CHIRP_PER_FRAME  = 256
 #   energy < _CALIBRATING_FLOOR → no one detected
 #   _CALIBRATING_FLOOR ≤ energy < _PRESENCE_FLOOR → calibrating (person sensed, signal weak)
 #   energy ≥ _PRESENCE_FLOOR → full presence, run BPM/RR
-_CALIBRATING_FLOOR = 80_000.0
-_PRESENCE_FLOOR    = 200_000.0
+_CALIBRATING_FLOOR = 60_000.0
+_PRESENCE_FLOOR    = 150_000.0
 
 
 def _peak_energy(mag: np.ndarray) -> float:
