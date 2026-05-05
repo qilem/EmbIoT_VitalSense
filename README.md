@@ -132,17 +132,8 @@ Click **Next**, choose **Getting Started → Empty App**, set a name and path, c
    ```
 2. Copy the **contents** of the cloned repo into your ModusToolbox project folder (the one you named in Step 3). **Overwrite all existing files** (especially `main.c` and `Makefile`).
 
-**Windows (PowerShell)**
-```powershell
-xcopy /E /Y /I EmbIoT_VitalSense\* <your-project-folder>\
-rmdir /S /Q EmbIoT_VitalSense
-```
+<img width="281" height="806" alt="image" src="https://github.com/user-attachments/assets/13661f2e-9406-4fb3-80c7-00c825b88c74" />
 
-**macOS / Linux**
-```bash
-cp -r EmbIoT_VitalSense/. <your-project-folder>/
-rm -rf EmbIoT_VitalSense
-```
 
 **Verify**: Your project folder should now have `main.c`, `host/`, and `deps/` directly inside it. If you see a folder named `EmbIoT_VitalSense` inside your project, you copied it incorrectly—move its contents up one level.
 
