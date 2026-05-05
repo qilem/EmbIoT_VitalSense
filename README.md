@@ -299,7 +299,7 @@ Requires Python 3.11+. Upgrade Python and re-run `pip install -r requirements.tx
 
 ## Security Notes
 
-The optional LLM API key is stored in plain text in `~/.vita/settings.json`. Use a project-scoped key with spending limits. Never commit a real API key to the repository — use placeholder text and instruct collaborators to add their own.
+The optional LLM API key is stored in plain text in `~/.vita/settings.json`.
 
 ---
 

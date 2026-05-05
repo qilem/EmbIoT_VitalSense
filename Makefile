@@ -143,7 +143,9 @@ POSTBUILD=
 
 CY_IGNORE=
 CY_IGNORE+=./.venv
-CY_IGNORE+=$(SEARCH_cobs-c)/tests-c $(SEARCH_cobs-c)/cobsr.c
+CY_IGNORE+=../mtb_shared/cobs-c/f4b8129/tests-c
+CY_IGNORE+=../mtb_shared/cobs-c/f4b8129/cobsr.c
+CY_IGNORE+=$(wildcard ../mtb_shared/cobs-c/*/tests-c) $(wildcard ../mtb_shared/cobs-c/*/cobsr.c)
 
 ################################################################################
 # Paths
