@@ -14,3 +14,4 @@ Raw radar frames stream over USB-CDC to our PC-side DSP pipeline, where range FF
 
 
 ![Vital Sense companion UI — live heart rate detection](docs/figures/working.png)
+demo link: https://www.loom.com/share/d6fcde1d3d39441eaabb6f72dac97aa9
