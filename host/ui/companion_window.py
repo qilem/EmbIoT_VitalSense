@@ -230,6 +230,7 @@ class SpeechBubble(QLabel):
         self.show()
         self._timer.start(ms)
         if self.parent() and hasattr(self.parent(), '_refit'):
+            self.adjustSize()  # force Qt to compute the new sizeHint before _refit reads it
             self.parent()._refit()
 
 
