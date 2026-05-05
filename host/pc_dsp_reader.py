@@ -28,7 +28,7 @@ CHIRP_PER_FRAME  = 256
 #   energy < _CALIBRATING_FLOOR → no one detected
 #   _CALIBRATING_FLOOR ≤ energy < _PRESENCE_FLOOR → calibrating (person sensed, signal weak)
 #   energy ≥ _PRESENCE_FLOOR → full presence, run BPM/RR
-_CALIBRATING_FLOOR = 100_000.0
+_CALIBRATING_FLOOR = 80_000.0
 _PRESENCE_FLOOR    = 180_000.0
 
 
