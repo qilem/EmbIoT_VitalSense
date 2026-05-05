@@ -202,6 +202,7 @@ class SpeechBubble(QLabel):
         self.setWordWrap(True)
         self.setFont(QFont("Segoe UI", 10))
         self.setFixedWidth(280)       # fixed width forces word-wrap to activate
+        self.setMinimumHeight(40)     # ensure box doesn't collapse
         self._apply_style("normal")
         self.hide()
         self._timer = QTimer(self)
@@ -210,9 +211,10 @@ class SpeechBubble(QLabel):
 
     def _apply_style(self, state: str):
         bg = _BUBBLE_COLOR.get(state, "#e8f5e9")
+        # Added margin to prevent clipping during movement/shaking
         self.setStyleSheet(
             f"background: {bg}; color: #1a1a1a;"
-            " border-radius: 12px; padding: 8px 14px;"
+            " border-radius: 12px; padding: 8px 14px; margin: 4px;"
         )
 
     def show_text(self, text: str, state: str, ms: int = 7000,
@@ -241,6 +243,7 @@ class DataPanel(QLabel):
         self.setStyleSheet(_PANEL_NORMAL)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setWordWrap(True)
+        self.setContentsMargins(4, 2, 4, 2)
         self.setText("Sit in front of the sensor")
         self._glitch_active = False
 
@@ -595,12 +598,21 @@ class CompanionWindow(QWidget):
             self._show_context_menu(event.globalPosition().toPoint())
 
     def _show_context_menu(self, pos: QPoint):
+        # Pause shaking so the menu is clickable
+        shaking = self._shake_timer.isActive()
+        if shaking:
+            self._shake_timer.stop()
+
         menu = QMenu(self)
         if self._settings_fn:
             menu.addAction("Settings…").triggered.connect(self._settings_fn)
         menu.addSeparator()
         menu.addAction("Quit").triggered.connect(QApplication.quit)
         menu.exec(pos)
+
+        # Resume shaking if we were shaking and are still in critical
+        if shaking and self._current_state == "critical":
+            self._shake_timer.start()
 
     # ── scroll to resize ──────────────────────────────────────────────────────
 
