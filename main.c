@@ -27,9 +27,6 @@
 #include "vital_sensing_radar_settings.h"
 #include "resource_map.h"
 
-#include "vitals_dsp.h"
-#include "vitals_state.h"
-#include "usb_proto.h"
 
 /*******************************************************************************
 * Macros
@@ -39,12 +36,12 @@
 #define CHUNK_SIZE                          128     /* samples per interrupt */
 #define EMIT_INTERVAL_MS                    1000    /* JSON emit rate */
 
-#ifdef RAW_CAPTURE_DEBUG
+
 #define MAGIC (0xFFDDFFDD)
 struct __attribute__((packed)) raw_hdr { uint32_t magic; uint32_t length; };
 static struct raw_hdr s_raw_hdr = { .magic = MAGIC, .length = CHUNK_SIZE * 2 };
 static uint8_t s_raw_tx[sizeof(struct raw_hdr) + CHUNK_SIZE * 2];
-#endif
+
 
 /*******************************************************************************
 * USB device info
@@ -166,16 +163,12 @@ int main(void) {
     printf("BGT60TRXX setup complete\r\n");
     cyhal_gpio_write(CYBSP_USER_LED, CYBSP_LED_STATE_ON);
 
-    /* DSP + state machine init */
-    vitals_dsp_init();
-    vitals_state_init();
 
-#ifdef RAW_CAPTURE_DEBUG
+
+
     memcpy(s_raw_tx, &s_raw_hdr, sizeof(s_raw_hdr));
-#endif
 
-    uint32_t last_emit_ms = 0;
-    uint32_t now_ms       = 0;
+
 
     for (;;) {
         /* Wait for radar FIFO interrupt */
@@ -194,30 +187,11 @@ int main(void) {
             }
         } while (fifo_result != XENSIV_BGT60TRXX_STATUS_OK);
 
-#ifdef RAW_CAPTURE_DEBUG
+
         /* Original raw-streaming path for DSP parity testing */
         memcpy(s_raw_tx + sizeof(s_raw_hdr), s_chunk, CHUNK_SIZE * 2);
         USBD_CDC_Write(usb_cdcHandle, s_raw_tx, sizeof(s_raw_tx), 0);
         USBD_CDC_WaitForTX(usb_cdcHandle, 0);
-#else
-        /* Edge-AI path: push chirp to DSP */
-        VitalsResult dsp_result;
-        bool fresh = vitals_dsp_push(s_chunk, &dsp_result);
 
-        /* Approximate millisecond counter — each CHUNK_SIZE at 200 Hz PRT = 0.64 s
-           We use the radar frame count as a proxy until a hardware timer is wired. */
-        now_ms += (uint32_t)((float)CHUNK_SIZE * VITALS_PRT_S * 1000.f);
-
-        if (fresh) {
-            vitals_state_update(&dsp_result, now_ms);
-        }
-
-        /* Emit JSON at ~1 Hz */
-        if ((now_ms - last_emit_ms) >= EMIT_INTERVAL_MS) {
-            last_emit_ms = now_ms;
-            VitaStatus st = vitals_state_get();
-            usb_proto_emit(usb_cdcHandle, &st);
-        }
-#endif /* RAW_CAPTURE_DEBUG */
     }
 }
