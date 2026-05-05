@@ -304,8 +304,8 @@ class CompanionWindow(QWidget):
         self._pending_state: str = "calibrating"
         self._pending_count: int = 0
 
-        self._setup_window()
         self._build_ui()
+        self._setup_window()
 
         self._frame_timer = QTimer(self)
         self._frame_timer.timeout.connect(self._next_frame)
