@@ -127,7 +127,7 @@ Click **Next**, choose **Getting Started → Empty App**, set a name and path, c
 ### Step 4 — Clone and copy this repo
 
 ```bash
-git clone https://github.com/Jazzhsu/EmbIoT_VitalSense.git
+git clone https://github.com/qilem/EmbIoT_VitalSense.git
 ```
 
 Copy **everything** from the cloned repo into the empty-app folder from Step 3 (overwrite existing files).
@@ -158,7 +158,7 @@ Plug **both** USB-C ports on the board into your PC before programming:
 
 `Terminal → Run Task… → Program`. Wait for programming to complete.
 
-**Verify**: open the VSCode NRFConnect extension → connect to VCOM0 of device `3150C5A012D2400`. You should see:
+**Verify**: open a serial terminal on the **KitProg3 debug port** (e.g. COM6 on Windows, `/dev/tty.usbmodem*` on macOS) at any baud rate. You should see:
 
 ```
 ****************** Vital Sense Application ******************
@@ -167,7 +167,7 @@ Plug **both** USB-C ports on the board into your PC before programming:
 BGT60TRXX setup complete
 ```
 
-Reset or reprogram if no output appears.
+Any serial terminal works — PuTTY, CoolTerm, VS Code Serial Monitor, or `python -m serial.tools.miniterm COM6 115200`. Reset or reprogram the board if no output appears.
 
 ### Step 10 — Find the data serial port
 
@@ -187,10 +187,26 @@ The data port is typically `/dev/tty.usbmodem24391` (exact suffix varies per boa
 
 ### Step 11 — Install Python dependencies
 
+From the repo root (the empty-app folder you copied everything into):
+
 ```bash
 cd host
 pip install -r requirements.txt
 ```
+
+This installs PySide6, pyserial, numpy, scipy, httpx, and PySide6-Addons. A virtual environment is recommended:
+
+```bash
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# macOS:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+> **Note**: `host.py` in the same folder is a legacy radar visualisation script (requires matplotlib). It is not needed to run the companion app.
 
 ### Step 12 — Run the host app
 
