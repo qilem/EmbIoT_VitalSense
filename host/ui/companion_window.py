@@ -201,26 +201,23 @@ class SpeechBubble(QLabel):
         super().__init__(parent)
         self.setWordWrap(True)
         self.setFont(QFont("Segoe UI", 10))
-        self.setFixedWidth(280)       # fixed width forces word-wrap to activate
-        self.setMinimumHeight(40)     # ensure box doesn't collapse
+        self.setFixedWidth(260)
+        self.setFixedHeight(110)      # always reserves space — window never moves
+        sp = self.sizePolicy()
+        sp.setRetainSizeWhenHidden(True)
+        self.setSizePolicy(sp)
         self._apply_style("normal")
         self.hide()
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self.hide)
-        self._timer.timeout.connect(self._on_hide)
 
     def _apply_style(self, state: str):
         bg = _BUBBLE_COLOR.get(state, "#e8f5e9")
-        # Added margin to prevent clipping during movement/shaking
         self.setStyleSheet(
             f"background: {bg}; color: #1a1a1a;"
             " border-radius: 12px; padding: 8px 14px; margin: 4px;"
         )
-
-    def _on_hide(self):
-        if self.parent() and hasattr(self.parent(), '_refit'):
-            self.parent()._refit()
 
     def show_text(self, text: str, state: str, ms: int = 7000,
                   sound_enabled: bool = False):
@@ -229,9 +226,6 @@ class SpeechBubble(QLabel):
         self.setText(text)
         self.show()
         self._timer.start(ms)
-        if self.parent() and hasattr(self.parent(), '_refit'):
-            self.adjustSize()  # force Qt to compute the new sizeHint before _refit reads it
-            self.parent()._refit()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -378,12 +372,10 @@ class CompanionWindow(QWidget):
         s = self._sprite_size
         if hasattr(self, '_sprite_label'):
             self._sprite_label.setFixedSize(s, s)
-        bubble_h = 0
-        if hasattr(self, '_bubble') and self._bubble.isVisible():
-            bubble_h = self._bubble.height()  # accurate after adjustSize() in show_text
-        # 70 = signal_bar(10) + data_panel(25) + margins(12) + spacing(9) + slack(14)
-        h = s + max(bubble_h + 70, 130)
-        self.resize(max(s + 60, 280), h)
+        # bubble always reserves 110px (RetainSizeWhenHidden), so height is fixed
+        # 110 (bubble) + s (sprite) + 10 (bar) + 25 (data) + 12 (margins) + 9 (spacing) + 14 (slack)
+        h = s + 180
+        self.resize(max(s + 60, 300), h)
 
     # definitive white-border fix: clear all pixels to transparent
     def paintEvent(self, event: QPaintEvent):
