@@ -90,6 +90,7 @@ ModusToolbox requires `main.c` and `Makefile` at the project root, so firmware s
 | UI framework | PySide6 >= 6.7.0 |
 | Sound (optional) | PySide6-Addons >= 6.7.0 |
 | Serial | pyserial >= 3.5 |
+| DSP | numpy >= 1.24.0, scipy >= 1.11.0 |
 | LLM (optional) | httpx >= 0.27.0 |
 | OS tested | Windows 11, macOS |
 
@@ -111,14 +112,17 @@ Search for **ModusToolbox Dashboard** (Windows) or **dashboard.app** (macOS). At
 
 Click **Launch Project Creator**.
 
-![Step 3](images/step_create.png)
+![Launch Project Creator](images/step_create.png)
 
+Select your board:
 - If the board is connected: select it under **Detected devices**.
 - Otherwise: select **PSoC 6 BSPs → CY8CKIT-062S2-AI**.
 
+![Select board](images/step_select_board.png)
+
 Click **Next**, choose **Getting Started → Empty App**, set a name and path, click **Create**.
 
-![Step 3b](images/step_select_board.png)
+![Select Empty App](images/step_select_app.png)
 
 ### Step 4 — Clone and copy this repo
 
