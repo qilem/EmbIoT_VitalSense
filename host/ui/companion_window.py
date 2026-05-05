@@ -306,7 +306,9 @@ class CompanionWindow(QWidget):
         self._pending_state: str = "calibrating"
         self._pending_count: int = 0
 
+        # Create UI elements first
         self._build_ui()
+        # Then setup window (calls _refit which needs UI elements)
         self._setup_window()
 
         self._frame_timer = QTimer(self)
@@ -367,7 +369,8 @@ class CompanionWindow(QWidget):
     def _refit(self):
         s = self._sprite_size
         self.resize(max(s + 60, 280), s + 120)
-        self._sprite_label.setFixedSize(s, s)
+        if hasattr(self, '_sprite_label'):
+            self._sprite_label.setFixedSize(s, s)
 
     # definitive white-border fix: clear all pixels to transparent
     def paintEvent(self, event: QPaintEvent):
@@ -434,9 +437,6 @@ class CompanionWindow(QWidget):
         if state == "stress":
             self._data_panel.set_glitch(True)
             self._glitch_timer.start(2500)
-            self._start_breathing()
-        else:
-            self._stop_breathing()
 
         self._mood_list = _MOODS.get(state, _MOODS["normal"])
         self._mood_idx  = 0
