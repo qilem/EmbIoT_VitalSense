@@ -208,6 +208,7 @@ class SpeechBubble(QLabel):
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self.hide)
+        self._timer.timeout.connect(self._on_hide)
 
     def _apply_style(self, state: str):
         bg = _BUBBLE_COLOR.get(state, "#e8f5e9")
@@ -217,6 +218,10 @@ class SpeechBubble(QLabel):
             " border-radius: 12px; padding: 8px 14px; margin: 4px;"
         )
 
+    def _on_hide(self):
+        if self.parent() and hasattr(self.parent(), '_refit'):
+            self.parent()._refit()
+
     def show_text(self, text: str, state: str, ms: int = 7000,
                   sound_enabled: bool = False):
         _play(*_BUBBLE_SOUND, enabled=sound_enabled)
@@ -224,6 +229,8 @@ class SpeechBubble(QLabel):
         self.setText(text)
         self.show()
         self._timer.start(ms)
+        if self.parent() and hasattr(self.parent(), '_refit'):
+            self.parent()._refit()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -368,7 +375,11 @@ class CompanionWindow(QWidget):
 
     def _refit(self):
         s = self._sprite_size
-        self.resize(max(s + 60, 280), s + 120)
+        bubble_h = 0
+        if hasattr(self, '_bubble') and self._bubble.isVisible():
+            bubble_h = self._bubble.sizeHint().height()
+        h = s + max(bubble_h + 50, 120)  # 50 = data panel + spacing + margins
+        self.resize(max(s + 60, 280), h)
         if hasattr(self, '_sprite_label'):
             self._sprite_label.setFixedSize(s, s)
 
